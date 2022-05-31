@@ -1,10 +1,11 @@
 import { Box, BoxProps, Text } from "@chakra-ui/react";
 import { FC } from "react";
+import { Swap } from "./Swap/Swap";
 
 export const Main: FC = () => {
   return (
     <Box {...wrapperStyles}>
-      <Text>main content goes here</Text>
+      <Swap />
     </Box>
   );
 };
