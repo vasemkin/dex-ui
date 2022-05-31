@@ -1,3 +1,9 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": ["ts-standard", "plugin:@next/next/recommended"],
+  "rules": {
+    "indent": ["error", "tab"],
+    "semi": ["error", "never"],
+    "no-tabs": 0,
+    "no-multi-spaces": 1
+  }
 }
