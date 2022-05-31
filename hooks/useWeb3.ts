@@ -6,6 +6,7 @@ export const useWeb3 = () => {
   const [web3Modal, setWeb3Modal] = useState<null | Web3Modal>(null);
   const [address, setAddress] = useState("");
   const [connected, setConnected] = useState(false);
+  const [provider, setProvider] = useState<any>(null);
 
   useEffect(() => {
     const providerOptions = {};
@@ -28,6 +29,7 @@ export const useWeb3 = () => {
         const ethersProvider = new providers.Web3Provider(provider);
         const userAddress = await ethersProvider.getSigner().getAddress();
         setAddress(userAddress);
+        setProvider(ethersProvider);
       };
 
       getAddress();
@@ -40,6 +42,7 @@ export const useWeb3 = () => {
       const ethersProvider = new providers.Web3Provider(provider);
       const userAddress = await ethersProvider.getSigner().getAddress();
       setAddress(userAddress);
+      setProvider(ethersProvider);
     }
 
     setConnected(true);
@@ -60,6 +63,7 @@ export const useWeb3 = () => {
     disconnect,
     address,
     web3Modal,
+    provider,
     setWeb3Modal,
   };
 };

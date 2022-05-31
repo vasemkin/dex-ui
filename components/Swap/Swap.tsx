@@ -1,23 +1,129 @@
 import { Box, BoxProps, Button, ButtonProps } from "@chakra-ui/react";
-import { FC } from "react";
+import { FC, useEffect, useState } from "react";
 import {
   chakraGradientBorder,
   ChakraGradientBorderProps,
 } from "../../hoc/ChakraGradientBorder";
 import { Divide } from "./components/Divide";
 import { Token } from "./components/Token/Token";
+import { useWeb3 } from "../../hooks/useWeb3";
+import { BigNumber, ethers } from "ethers";
+import { useContracts } from "../../hooks/useContracts";
+
+import tokenAbi from "../../deployments/testnet/Token.json";
+import uniAbi from "../../deployments/testnet/UniToken.json";
 
 const Wrapper = chakraGradientBorder(Box);
 
 export const Swap: FC<BoxProps> = ({ ...rest }) => {
+  const { provider, connectWallet, address } = useWeb3();
+  const { dex, uni, token: tok } = useContracts();
+
+  const [uniBalance, setUniBalance] = useState<BigNumber>(BigNumber.from("0"));
+  const [tokBalance, setTokBalance] = useState<BigNumber>(BigNumber.from("0"));
+
+  const [fromAmt, setFromAmt] = useState<string>("0");
+  const [toAmt, setToAmt] = useState<string>("0");
+
+  const [fromAddress, setFromAddress] = useState<string>(tokenAbi.address);
+  const [toAddress, setToAddress] = useState<string>(uniAbi.address);
+
+  useEffect(() => {
+    if (!!uni && !!address) {
+      const logic = async () => {
+        const uniBalance = await uni.balanceOf(address);
+        setUniBalance(uniBalance);
+      };
+
+      logic();
+    }
+  }, [uni, address]);
+
+  useEffect(() => {
+    if (!!uni && !!address) {
+      const logic = async () => {
+        const tokBalance = await tok.balanceOf(address);
+        setTokBalance(tokBalance);
+      };
+
+      logic();
+    }
+  }, [uni, address]);
+
+  useEffect(() => {
+    if (!!dex) {
+      const logic = async () => {
+        const amt = fromAmt === "" ? "0" : fromAmt;
+        const value = ethers.utils.parseEther(amt);
+        try {
+          const tokenEstimate = await dex.estimateTokenAmount(
+            value,
+            tokenAbi.address,
+            uniAbi.address
+          );
+
+          setToAmt(ethers.utils.formatEther(tokenEstimate));
+        } catch (error) {
+          alert("not enough liquidity");
+        }
+      };
+
+      logic();
+    }
+  }, [fromAmt]);
+
+  const swap = async () => {
+    try {
+      const _ = ethers.utils.parseEther(fromAmt);
+    } catch (error) {
+      alert("please input a valid amount");
+      return;
+    }
+
+    const amt = ethers.utils.parseEther(fromAmt);
+
+    if (!!dex) {
+      if (fromAddress === tok.address) {
+        const approveTx = await tok.approve(dex.address, amt);
+        await approveTx.wait();
+      } else {
+        const approveTx = await uni.approve(dex.address, amt);
+        await approveTx.wait();
+      }
+
+      const tx = await dex.swap(amt, fromAddress, toAddress);
+      console.log("swap tx: ", tx.hash);
+    }
+  };
+
   return (
     <Box>
       <Wrapper {...wrapperStyles} {...rest}>
-        <Token />
+        <Token
+          symbol="TOK"
+          from={true}
+          balance={tokBalance}
+          amount={fromAmt}
+          setAmount={setFromAmt}
+        />
         <Divide />
-        <Token />
+        <Token
+          symbol="UNI"
+          from={false}
+          balance={uniBalance}
+          amount={toAmt}
+          setAmount={setToAmt}
+        />
       </Wrapper>
-      <Button {...buttonStyles}>Swap</Button>
+      {!!provider ? (
+        <Button {...buttonStyles} onClick={swap}>
+          Swap
+        </Button>
+      ) : (
+        <Button {...buttonStyles} onClick={connectWallet}>
+          Connect wallet
+        </Button>
+      )}
     </Box>
   );
 };

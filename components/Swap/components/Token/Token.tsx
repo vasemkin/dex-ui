@@ -1,15 +1,24 @@
 import { Box } from "@chakra-ui/react";
 import { FC } from "react";
-import { Balance } from "./components/Balance";
-import { Input } from "./components/Input";
-import { Symbol } from "./components/Symbol";
+import { Balance, BalanceProps } from "./components/Balance";
+import { Input, InputProps } from "./components/Input";
+import { Symbol, SymbolProps } from "./components/Symbol";
 
-export const Token: FC = () => {
+export type TokenProps = SymbolProps & BalanceProps & InputProps;
+
+export const Token: FC<TokenProps> = ({
+  symbol,
+  from,
+  balance,
+  amount,
+  setAmount,
+  ...rest
+}) => {
   return (
-    <Box>
-      <Symbol symbol="TOK" from={true} />
-      <Input />
-      <Balance balance="0" />
+    <Box {...rest}>
+      <Symbol symbol={symbol} from={from} />
+      <Input amount={amount} setAmount={setAmount} from={from} />
+      <Balance balance={balance} />
     </Box>
   );
 };

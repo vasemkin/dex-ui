@@ -1,14 +1,17 @@
 import { Text, TextProps } from "@chakra-ui/react";
+import { BigNumber, BigNumberish, ethers } from "ethers";
 import { FC } from "react";
 
 export type BalanceProps = {
-  balance: string;
+  balance: BigNumber | BigNumberish;
 } & TextProps;
 
 export const Balance: FC<BalanceProps> = ({ balance, ...rest }) => {
+  const formatted = ethers.utils.formatEther(balance);
+
   return (
     <Text {...textStyles} {...rest}>
-      Balance: {balance}
+      Balance: {formatted}
     </Text>
   );
 };
