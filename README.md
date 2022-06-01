@@ -1,34 +1,40 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# [🍛 Proof-of-concept DEX](https://dex-ui-zeta.vercel.app/)
 
-## Getting Started
+Solidity smart contracts can be found [in this repository](https://github.com/vasemkin/dex).
 
-First, run the development server:
+## 🔧 Setting up Local Development
+
+Required:
+
+- [Node v16](https://nodejs.org/download/release/latest-v16.x/)
+- [Yarn](https://classic.yarnpkg.com/en/docs/install/)
+- [Git](https://git-scm.com/downloads)
 
 ```bash
-npm run dev
-# or
-yarn dev
+$ git clone https://github.com/vasemkin/dex-ui.git
+$ cd dex-ui
+
+$ yarn
+$ yarn dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The site is now running at `http://localhost:3000`!
+Open the source code and start editing!
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+## Architecture/Layout
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+The app is written in [React](https://reactjs.org/) and [NextJS](https://nextjs.org/).
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+The files/folder structure are a **WIP** and may contain some unused files. The project is rapidly evolving so please update this section if you see it is inaccurate!
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+```
+./
+├── app/          // App logic page
+├── components/   // Reusable individual components
+├── hoc/          // Higher Order Components
+├── hooks/        // Custom hooks with common logic
+├── pages/        // Page structure
+├── deployments/  // ABIs and contract adresses
+├── typechain/    // TypeScript interfaces for smart contracts
+└── public/       // Static assets
+```
