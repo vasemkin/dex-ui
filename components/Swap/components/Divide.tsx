@@ -1,11 +1,25 @@
-import { Box, BoxProps, Divider, Image, ImageProps } from "@chakra-ui/react";
+import {
+  Box,
+  BoxProps,
+  Button,
+  ButtonProps,
+  Divider,
+  Image,
+  ImageProps,
+} from "@chakra-ui/react";
 import { FC } from "react";
 
-export const Divide: FC<BoxProps> = ({ ...rest }) => {
+export type DivideProps = {
+  action: () => void;
+} & BoxProps;
+
+export const Divide: FC<DivideProps> = ({ action, ...rest }) => {
   return (
     <Box {...wrapperStyles} {...rest}>
       <Divider />
-      <Image {...imageStyles} />
+      <Button {...buttonStyles} onClick={action}>
+        <Image {...imageStyles} />
+      </Button>
       <Divider />
     </Box>
   );
@@ -21,4 +35,15 @@ const wrapperStyles: BoxProps = {
   display: "grid",
   gridTemplateColumns: "1fr max-content 1fr",
   alignItems: "center",
+};
+
+const buttonStyles: ButtonProps = {
+  bg: "none",
+  border: "none",
+  _hover: {
+    bg: "none",
+  },
+  _active: {
+    bg: "none",
+  },
 };

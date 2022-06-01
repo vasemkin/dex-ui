@@ -37,10 +37,12 @@ export const Input: FC<InputProps> = ({ amount, setAmount, from, ...rest }) => {
 
   return (
     <Box {...wrapperStyles} {...rest}>
-      <Box {...buttonWrapperStyles}>
-        <Button {...buttonStyles}>50%</Button>
-        <Button {...buttonStyles}>MAX</Button>
-      </Box>
+      {from && (
+        <Box {...buttonWrapperStyles}>
+          <Button {...buttonStyles}>50%</Button>
+          <Button {...buttonStyles}>MAX</Button>
+        </Box>
+      )}
       <CInput
         {...inputStyles}
         disabled={!from}

@@ -1,5 +1,5 @@
-import { Box, BoxProps, Button, ButtonProps } from "@chakra-ui/react";
-import { FC, useEffect, useState } from "react";
+import { Box, BoxProps, Button, ButtonProps, useToast } from "@chakra-ui/react";
+import { Dispatch, FC, SetStateAction, useEffect, useState } from "react";
 import {
   chakraGradientBorder,
   ChakraGradientBorderProps,
@@ -15,9 +15,15 @@ import uniAbi from "../../deployments/testnet/UniToken.json";
 
 const Wrapper = chakraGradientBorder(Box);
 
-export const Swap: FC<BoxProps> = ({ ...rest }) => {
+export type SwapProps = {
+  dexUpdated: boolean;
+  setDexUpdated: Dispatch<SetStateAction<boolean>>;
+};
+
+export const Swap: FC<SwapProps> = ({ dexUpdated, setDexUpdated, ...rest }) => {
   const { provider, connectWallet, address } = useWeb3();
   const { dex, uni, token: tok } = useContracts();
+  const toast = useToast();
 
   const [uniBalance, setUniBalance] = useState<BigNumber>(BigNumber.from("0"));
   const [tokBalance, setTokBalance] = useState<BigNumber>(BigNumber.from("0"));
@@ -28,25 +34,27 @@ export const Swap: FC<BoxProps> = ({ ...rest }) => {
   const [fromAddress, setFromAddress] = useState<string>(tokenAbi.address);
   const [toAddress, setToAddress] = useState<string>(uniAbi.address);
 
+  const [swapDisabled, setSwapDisabled] = useState<boolean>(false);
+
+  const updateUniBalance = async () => {
+    const uniBalance = await uni.balanceOf(address);
+    setUniBalance(uniBalance);
+  };
+
   useEffect(() => {
     if (!!uni && !!address) {
-      const logic = async () => {
-        const uniBalance = await uni.balanceOf(address);
-        setUniBalance(uniBalance);
-      };
-
-      logic();
+      updateUniBalance();
     }
   }, [uni, address]);
 
+  const updateTokBalance = async () => {
+    const tokBalance = await tok.balanceOf(address);
+    setTokBalance(tokBalance);
+  };
+
   useEffect(() => {
     if (!!uni && !!address) {
-      const logic = async () => {
-        const tokBalance = await tok.balanceOf(address);
-        setTokBalance(tokBalance);
-      };
-
-      logic();
+      updateTokBalance();
     }
   }, [uni, address]);
 
@@ -58,8 +66,8 @@ export const Swap: FC<BoxProps> = ({ ...rest }) => {
         try {
           const tokenEstimate = await dex.estimateTokenAmount(
             value,
-            tokenAbi.address,
-            uniAbi.address
+            fromAddress,
+            toAddress
           );
 
           setToAmt(ethers.utils.formatEther(tokenEstimate));
@@ -71,6 +79,15 @@ export const Swap: FC<BoxProps> = ({ ...rest }) => {
       logic();
     }
   }, [fromAmt]);
+
+  const handlePairChange = () => {
+    const from = fromAddress;
+    const to = toAddress;
+    setFromAddress(to);
+    setToAddress(from);
+    setToAmt("");
+    setFromAmt("");
+  };
 
   const swap = async () => {
     try {
@@ -85,14 +102,33 @@ export const Swap: FC<BoxProps> = ({ ...rest }) => {
     if (!!dex) {
       if (fromAddress === tok.address) {
         const approveTx = await tok.approve(dex.address, amt);
+        toast({
+          title: "tx sent to Polygon",
+          description: `hash: ${approveTx.hash}. please wait for tx to be mined before swap.`,
+        });
+        setSwapDisabled(true);
         await approveTx.wait();
+        setSwapDisabled(false);
       } else {
         const approveTx = await uni.approve(dex.address, amt);
+        setSwapDisabled(true);
+        toast({
+          title: "tx sent to Polygon",
+          description: `hash: ${approveTx.hash}. please wait for tx to be mined before swap.`,
+        });
         await approveTx.wait();
+        setSwapDisabled(false);
       }
 
       const tx = await dex.swap(amt, fromAddress, toAddress);
-      console.log("swap tx: ", tx.hash);
+      toast({
+        title: "tx sent to Polygon",
+        description: `hash: ${tx.hash}.`,
+      });
+      await tx.wait();
+      updateTokBalance();
+      updateUniBalance();
+      setDexUpdated((prev) => !prev);
     }
   };
 
@@ -100,23 +136,23 @@ export const Swap: FC<BoxProps> = ({ ...rest }) => {
     <Box>
       <Wrapper {...wrapperStyles} {...rest}>
         <Token
-          symbol="TOK"
+          symbol={fromAddress === tok?.address ? "TOK" : "UNI"}
           from={true}
-          balance={tokBalance}
+          balance={fromAddress === tok?.address ? tokBalance : uniBalance}
           amount={fromAmt}
           setAmount={setFromAmt}
         />
-        <Divide />
+        <Divide action={handlePairChange} />
         <Token
-          symbol="UNI"
+          symbol={toAddress === uni?.address ? "UNI" : "TOK"}
           from={false}
-          balance={uniBalance}
+          balance={toAddress === uni?.address ? uniBalance : tokBalance}
           amount={toAmt}
           setAmount={setToAmt}
         />
       </Wrapper>
       {!!provider ? (
-        <Button {...buttonStyles} onClick={swap}>
+        <Button {...buttonStyles} onClick={swap} disabled={swapDisabled}>
           Swap
         </Button>
       ) : (

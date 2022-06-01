@@ -23,6 +23,7 @@ import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 interface DEXInterface extends ethers.utils.Interface {
   functions: {
     "deposit(uint256,address,address)": FunctionFragment;
+    "estimateDeposit(uint256,address,address)": FunctionFragment;
     "estimateTokenAmount(uint256,address,address)": FunctionFragment;
     "initialize(uint256)": FunctionFragment;
     "liquidity(address)": FunctionFragment;
@@ -34,6 +35,10 @@ interface DEXInterface extends ethers.utils.Interface {
 
   encodeFunctionData(
     functionFragment: "deposit",
+    values: [BigNumberish, string, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "estimateDeposit",
     values: [BigNumberish, string, string]
   ): string;
   encodeFunctionData(
@@ -63,6 +68,10 @@ interface DEXInterface extends ethers.utils.Interface {
   ): string;
 
   decodeFunctionResult(functionFragment: "deposit", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "estimateDeposit",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "estimateTokenAmount",
     data: BytesLike
@@ -131,6 +140,13 @@ export class DEX extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    estimateDeposit(
+      _amount: BigNumberish,
+      _baseToken: string,
+      _token: string,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
     estimateTokenAmount(
       _tokenAmount: BigNumberish,
       _fromToken: string,
@@ -149,8 +165,8 @@ export class DEX extends BaseContract {
 
     price(
       _inputAmount: BigNumberish,
-      _inputReserve: BigNumberish,
-      _outputReserve: BigNumberish,
+      _fromReserve: BigNumberish,
+      _toReserve: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
@@ -176,6 +192,13 @@ export class DEX extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  estimateDeposit(
+    _amount: BigNumberish,
+    _baseToken: string,
+    _token: string,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
   estimateTokenAmount(
     _tokenAmount: BigNumberish,
     _fromToken: string,
@@ -194,8 +217,8 @@ export class DEX extends BaseContract {
 
   price(
     _inputAmount: BigNumberish,
-    _inputReserve: BigNumberish,
-    _outputReserve: BigNumberish,
+    _fromReserve: BigNumberish,
+    _toReserve: BigNumberish,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
@@ -221,6 +244,13 @@ export class DEX extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    estimateDeposit(
+      _amount: BigNumberish,
+      _baseToken: string,
+      _token: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     estimateTokenAmount(
       _tokenAmount: BigNumberish,
       _fromToken: string,
@@ -239,8 +269,8 @@ export class DEX extends BaseContract {
 
     price(
       _inputAmount: BigNumberish,
-      _inputReserve: BigNumberish,
-      _outputReserve: BigNumberish,
+      _fromReserve: BigNumberish,
+      _toReserve: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -269,6 +299,13 @@ export class DEX extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    estimateDeposit(
+      _amount: BigNumberish,
+      _baseToken: string,
+      _token: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     estimateTokenAmount(
       _tokenAmount: BigNumberish,
       _fromToken: string,
@@ -287,8 +324,8 @@ export class DEX extends BaseContract {
 
     price(
       _inputAmount: BigNumberish,
-      _inputReserve: BigNumberish,
-      _outputReserve: BigNumberish,
+      _fromReserve: BigNumberish,
+      _toReserve: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -315,6 +352,13 @@ export class DEX extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    estimateDeposit(
+      _amount: BigNumberish,
+      _baseToken: string,
+      _token: string,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     estimateTokenAmount(
       _tokenAmount: BigNumberish,
       _fromToken: string,
@@ -336,8 +380,8 @@ export class DEX extends BaseContract {
 
     price(
       _inputAmount: BigNumberish,
-      _inputReserve: BigNumberish,
-      _outputReserve: BigNumberish,
+      _fromReserve: BigNumberish,
+      _toReserve: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
