@@ -133,7 +133,7 @@ export const Swap: FC<SwapProps> = ({ dexUpdated, setDexUpdated, ...rest }) => {
   };
 
   return (
-    <Box>
+    <Box w="370px">
       <Wrapper {...wrapperStyles} {...rest}>
         <Token
           symbol={fromAddress === tok?.address ? "TOK" : "UNI"}
@@ -166,7 +166,6 @@ export const Swap: FC<SwapProps> = ({ dexUpdated, setDexUpdated, ...rest }) => {
 
 const wrapperStyles = {
   mt: "2rem",
-  w: "370px",
   borderWidth: "2px",
   borderRadius: "20px",
   p: "28px",
