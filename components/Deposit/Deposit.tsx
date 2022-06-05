@@ -19,8 +19,8 @@ import { useWeb3 } from "../../hooks/useWeb3";
 import { BigNumber, ethers } from "ethers";
 import { useContracts } from "../../hooks/useContracts";
 
-import tokenAbi from "../../deployments/localhost/Token.json";
-import uniAbi from "../../deployments/localhost/UniToken.json";
+import tokenAbi from "../../deployments/testnet/Token.json";
+import uniAbi from "../../deployments/testnet/UniToken.json";
 
 const Wrapper = chakraGradientBorder(Box);
 
