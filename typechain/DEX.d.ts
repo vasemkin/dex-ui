@@ -25,6 +25,8 @@ interface DEXInterface extends ethers.utils.Interface {
     "deposit(uint256,address,address)": FunctionFragment;
     "estimateDeposit(uint256,address,address)": FunctionFragment;
     "estimateTokenAmount(uint256,address,address)": FunctionFragment;
+    "estimateWithdraw(uint256,address,address)": FunctionFragment;
+    "getLiquidity(address)": FunctionFragment;
     "initialize(uint256)": FunctionFragment;
     "liquidity(address)": FunctionFragment;
     "lockedLiquidity()": FunctionFragment;
@@ -44,6 +46,14 @@ interface DEXInterface extends ethers.utils.Interface {
   encodeFunctionData(
     functionFragment: "estimateTokenAmount",
     values: [BigNumberish, string, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "estimateWithdraw",
+    values: [BigNumberish, string, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getLiquidity",
+    values: [string]
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
@@ -74,6 +84,14 @@ interface DEXInterface extends ethers.utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "estimateTokenAmount",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "estimateWithdraw",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getLiquidity",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
@@ -145,7 +163,7 @@ export class DEX extends BaseContract {
       _baseToken: string,
       _token: string,
       overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
+    ): Promise<[BigNumber, BigNumber]>;
 
     estimateTokenAmount(
       _tokenAmount: BigNumberish,
@@ -153,6 +171,15 @@ export class DEX extends BaseContract {
       _toToken: string,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
+
+    estimateWithdraw(
+      _amount: BigNumberish,
+      _baseToken: string,
+      _token: string,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber, BigNumber]>;
+
+    getLiquidity(_lp: string, overrides?: CallOverrides): Promise<[BigNumber]>;
 
     initialize(
       _tokenAmount: BigNumberish,
@@ -178,7 +205,7 @@ export class DEX extends BaseContract {
     ): Promise<ContractTransaction>;
 
     withdraw(
-      _amount: BigNumberish,
+      _liquidityAmount: BigNumberish,
       _baseToken: string,
       _token: string,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -197,7 +224,7 @@ export class DEX extends BaseContract {
     _baseToken: string,
     _token: string,
     overrides?: CallOverrides
-  ): Promise<BigNumber>;
+  ): Promise<[BigNumber, BigNumber]>;
 
   estimateTokenAmount(
     _tokenAmount: BigNumberish,
@@ -205,6 +232,15 @@ export class DEX extends BaseContract {
     _toToken: string,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
+
+  estimateWithdraw(
+    _amount: BigNumberish,
+    _baseToken: string,
+    _token: string,
+    overrides?: CallOverrides
+  ): Promise<[BigNumber, BigNumber]>;
+
+  getLiquidity(_lp: string, overrides?: CallOverrides): Promise<BigNumber>;
 
   initialize(
     _tokenAmount: BigNumberish,
@@ -230,7 +266,7 @@ export class DEX extends BaseContract {
   ): Promise<ContractTransaction>;
 
   withdraw(
-    _amount: BigNumberish,
+    _liquidityAmount: BigNumberish,
     _baseToken: string,
     _token: string,
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -249,7 +285,7 @@ export class DEX extends BaseContract {
       _baseToken: string,
       _token: string,
       overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    ): Promise<[BigNumber, BigNumber]>;
 
     estimateTokenAmount(
       _tokenAmount: BigNumberish,
@@ -257,6 +293,15 @@ export class DEX extends BaseContract {
       _toToken: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    estimateWithdraw(
+      _amount: BigNumberish,
+      _baseToken: string,
+      _token: string,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber, BigNumber]>;
+
+    getLiquidity(_lp: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     initialize(
       _tokenAmount: BigNumberish,
@@ -282,7 +327,7 @@ export class DEX extends BaseContract {
     ): Promise<BigNumber>;
 
     withdraw(
-      _amount: BigNumberish,
+      _liquidityAmount: BigNumberish,
       _baseToken: string,
       _token: string,
       overrides?: CallOverrides
@@ -313,6 +358,15 @@ export class DEX extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    estimateWithdraw(
+      _amount: BigNumberish,
+      _baseToken: string,
+      _token: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    getLiquidity(_lp: string, overrides?: CallOverrides): Promise<BigNumber>;
+
     initialize(
       _tokenAmount: BigNumberish,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
@@ -337,7 +391,7 @@ export class DEX extends BaseContract {
     ): Promise<BigNumber>;
 
     withdraw(
-      _amount: BigNumberish,
+      _liquidityAmount: BigNumberish,
       _baseToken: string,
       _token: string,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -363,6 +417,18 @@ export class DEX extends BaseContract {
       _tokenAmount: BigNumberish,
       _fromToken: string,
       _toToken: string,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    estimateWithdraw(
+      _amount: BigNumberish,
+      _baseToken: string,
+      _token: string,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getLiquidity(
+      _lp: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -393,7 +459,7 @@ export class DEX extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     withdraw(
-      _amount: BigNumberish,
+      _liquidityAmount: BigNumberish,
       _baseToken: string,
       _token: string,
       overrides?: Overrides & { from?: string | Promise<string> }

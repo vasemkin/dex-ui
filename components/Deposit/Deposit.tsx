@@ -1,4 +1,13 @@
-import { Box, BoxProps, Button, ButtonProps, useToast } from "@chakra-ui/react";
+import {
+  Box,
+  BoxProps,
+  Button,
+  ButtonProps,
+  Divider,
+  Text,
+  TextProps,
+  useToast,
+} from "@chakra-ui/react";
 import { Dispatch, FC, SetStateAction, useEffect, useState } from "react";
 import {
   chakraGradientBorder,
@@ -15,18 +24,25 @@ import uniAbi from "../../deployments/localhost/UniToken.json";
 
 const Wrapper = chakraGradientBorder(Box);
 
-export type SwapProps = {
+export type DepositProps = {
   dexUpdated: boolean;
   setDexUpdated: Dispatch<SetStateAction<boolean>>;
 };
 
-export const Swap: FC<SwapProps> = ({ dexUpdated, setDexUpdated, ...rest }) => {
+export const Deposit: FC<DepositProps> = ({
+  dexUpdated,
+  setDexUpdated,
+  ...rest
+}) => {
   const { provider, connectWallet, address } = useWeb3();
   const { dex, uni, token: tok } = useContracts();
   const toast = useToast();
 
   const [uniBalance, setUniBalance] = useState<BigNumber>(BigNumber.from("0"));
   const [tokBalance, setTokBalance] = useState<BigNumber>(BigNumber.from("0"));
+  const [liquidityMinted, setLiquidityMinted] = useState<BigNumber>(
+    BigNumber.from("0")
+  );
 
   const [fromAmt, setFromAmt] = useState<string>("0");
   const [toAmt, setToAmt] = useState<string>("0");
@@ -34,7 +50,7 @@ export const Swap: FC<SwapProps> = ({ dexUpdated, setDexUpdated, ...rest }) => {
   const [fromAddress, setFromAddress] = useState<string>(tokenAbi.address);
   const [toAddress, setToAddress] = useState<string>(uniAbi.address);
 
-  const [swapDisabled, setSwapDisabled] = useState<boolean>(false);
+  const [swapDisabled, setDepositDisabled] = useState<boolean>(false);
 
   const updateUniBalance = async () => {
     const uniBalance = await uni.balanceOf(address);
@@ -64,13 +80,14 @@ export const Swap: FC<SwapProps> = ({ dexUpdated, setDexUpdated, ...rest }) => {
         const amt = fromAmt === "" ? "0" : fromAmt;
         const value = ethers.utils.parseEther(amt);
         try {
-          const tokenEstimate = await dex.estimateTokenAmount(
+          const tokenEstimate = await dex.estimateDeposit(
             value,
             fromAddress,
             toAddress
           );
 
-          setToAmt(ethers.utils.formatEther(tokenEstimate));
+          setToAmt(ethers.utils.formatEther(tokenEstimate[0]));
+          setLiquidityMinted(tokenEstimate[1]);
         } catch (error) {
           alert("not enough liquidity");
         }
@@ -89,7 +106,7 @@ export const Swap: FC<SwapProps> = ({ dexUpdated, setDexUpdated, ...rest }) => {
     setFromAmt("");
   };
 
-  const swap = async () => {
+  const deposit = async () => {
     try {
       const _ = ethers.utils.parseEther(fromAmt);
     } catch (error) {
@@ -100,27 +117,25 @@ export const Swap: FC<SwapProps> = ({ dexUpdated, setDexUpdated, ...rest }) => {
     const amt = ethers.utils.parseEther(fromAmt);
 
     if (!!dex) {
-      if (fromAddress === tok.address) {
-        const approveTx = await tok.approve(dex.address, amt);
-        toast({
-          title: "tx sent to Polygon",
-          description: `hash: ${approveTx.hash}. please wait for tx to be mined before swap.`,
-        });
-        setSwapDisabled(true);
-        await approveTx.wait();
-        setSwapDisabled(false);
-      } else {
-        const approveTx = await uni.approve(dex.address, amt);
-        setSwapDisabled(true);
-        toast({
-          title: "tx sent to Polygon",
-          description: `hash: ${approveTx.hash}. please wait for tx to be mined before swap.`,
-        });
-        await approveTx.wait();
-        setSwapDisabled(false);
-      }
+      const approveTx = await tok.approve(dex.address, amt);
+      toast({
+        title: "tx sent to Polygon",
+        description: `hash: ${approveTx.hash}. please wait for tx to be mined before swap.`,
+      });
+      setDepositDisabled(true);
+      await approveTx.wait();
+      setDepositDisabled(false);
 
-      const tx = await dex.swap(amt, fromAddress, toAddress);
+      const approveTx2 = await uni.approve(dex.address, amt);
+      setDepositDisabled(true);
+      toast({
+        title: "tx sent to Polygon",
+        description: `hash: ${approveTx2.hash}. please wait for tx to be mined before swap.`,
+      });
+      await approveTx2.wait();
+      setDepositDisabled(false);
+
+      const tx = await dex.deposit(amt, fromAddress, toAddress);
       toast({
         title: "tx sent to Polygon",
         description: `hash: ${tx.hash}.`,
@@ -150,10 +165,16 @@ export const Swap: FC<SwapProps> = ({ dexUpdated, setDexUpdated, ...rest }) => {
           amount={toAmt}
           setAmount={setToAmt}
         />
+
+        <Divider />
+        <Text {...textStyles}>Liquidity minted:</Text>
+        <Text {...textStyles} fontSize="12px">
+          {ethers.utils.formatEther(liquidityMinted)}
+        </Text>
       </Wrapper>
       {!!provider ? (
-        <Button {...buttonStyles} onClick={swap} disabled={swapDisabled}>
-          Swap
+        <Button {...buttonStyles} onClick={deposit} disabled={swapDisabled}>
+          Deposit
         </Button>
       ) : (
         <Button {...buttonStyles} onClick={connectWallet}>
@@ -191,4 +212,10 @@ const buttonStyles: ButtonProps = {
   _active: {
     bg: "linear-gradient(92.56deg, #FD7B3B 2.51%, #B93FF0 124.48%)",
   },
+};
+
+const textStyles: TextProps = {
+  fontSize: "16px",
+  lineHeight: "14px",
+  color: "#787878",
 };

@@ -4,9 +4,9 @@ import { useWeb3 } from "./useWeb3";
 
 import type { DEX, Token as Tok, UniToken } from "../typechain";
 
-import dexAbi from "../deployments/testnet/DEX.json";
-import tokenAbi from "../deployments/testnet/Token.json";
-import uniAbi from "../deployments/testnet/UniToken.json";
+import dexAbi from "../deployments/localhost/DEX.json";
+import tokenAbi from "../deployments/localhost/Token.json";
+import uniAbi from "../deployments/localhost/UniToken.json";
 
 export const useContracts = () => {
   const { provider, connectWallet, address } = useWeb3();

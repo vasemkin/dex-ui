@@ -1,4 +1,13 @@
-import { Box, BoxProps, Button, ButtonProps, useToast } from "@chakra-ui/react";
+import {
+  Box,
+  BoxProps,
+  Button,
+  ButtonProps,
+  Divider,
+  Text,
+  TextProps,
+  useToast,
+} from "@chakra-ui/react";
 import { Dispatch, FC, SetStateAction, useEffect, useState } from "react";
 import {
   chakraGradientBorder,
@@ -12,33 +21,47 @@ import { useContracts } from "../../hooks/useContracts";
 
 import tokenAbi from "../../deployments/localhost/Token.json";
 import uniAbi from "../../deployments/localhost/UniToken.json";
+import { Liquidity } from "./components/Liquidity/Liquidity";
 
 const Wrapper = chakraGradientBorder(Box);
 
-export type SwapProps = {
+export type WithdrawProps = {
   dexUpdated: boolean;
   setDexUpdated: Dispatch<SetStateAction<boolean>>;
 };
 
-export const Swap: FC<SwapProps> = ({ dexUpdated, setDexUpdated, ...rest }) => {
+export const Withdraw: FC<WithdrawProps> = ({
+  dexUpdated,
+  setDexUpdated,
+  ...rest
+}) => {
   const { provider, connectWallet, address } = useWeb3();
   const { dex, uni, token: tok } = useContracts();
   const toast = useToast();
 
   const [uniBalance, setUniBalance] = useState<BigNumber>(BigNumber.from("0"));
   const [tokBalance, setTokBalance] = useState<BigNumber>(BigNumber.from("0"));
+  const [liquidityMinted, setLiquidityMinted] = useState<BigNumber>(
+    BigNumber.from("0")
+  );
 
+  const [liquidity, setLiquidity] = useState<string>("0");
   const [fromAmt, setFromAmt] = useState<string>("0");
   const [toAmt, setToAmt] = useState<string>("0");
 
   const [fromAddress, setFromAddress] = useState<string>(tokenAbi.address);
   const [toAddress, setToAddress] = useState<string>(uniAbi.address);
 
-  const [swapDisabled, setSwapDisabled] = useState<boolean>(false);
+  const [swapDisabled, setWithdrawDisabled] = useState<boolean>(false);
 
   const updateUniBalance = async () => {
     const uniBalance = await uni.balanceOf(address);
     setUniBalance(uniBalance);
+  };
+
+  const updateLiquidityAmt = async () => {
+    const lq = await dex.getLiquidity(address);
+    setLiquidityMinted(lq);
   };
 
   useEffect(() => {
@@ -47,30 +70,37 @@ export const Swap: FC<SwapProps> = ({ dexUpdated, setDexUpdated, ...rest }) => {
     }
   }, [uni, address, dexUpdated]);
 
+  useEffect(() => {
+    if (!!dex && !!address) {
+      updateLiquidityAmt();
+    }
+  }, [dex, address, dexUpdated]);
+
   const updateTokBalance = async () => {
     const tokBalance = await tok.balanceOf(address);
     setTokBalance(tokBalance);
   };
 
   useEffect(() => {
-    if (!!uni && !!address) {
+    if (!!tok && !!address) {
       updateTokBalance();
     }
-  }, [uni, address, dexUpdated]);
+  }, [tok, address, dexUpdated]);
 
   useEffect(() => {
     if (!!dex) {
       const logic = async () => {
-        const amt = fromAmt === "" ? "0" : fromAmt;
+        const amt = liquidity === "" ? "0" : liquidity;
         const value = ethers.utils.parseEther(amt);
         try {
-          const tokenEstimate = await dex.estimateTokenAmount(
+          const tokenEstimate = await dex.estimateWithdraw(
             value,
             fromAddress,
             toAddress
           );
 
-          setToAmt(ethers.utils.formatEther(tokenEstimate));
+          setToAmt(ethers.utils.formatEther(tokenEstimate[0]));
+          setFromAmt(ethers.utils.formatEther(tokenEstimate[1]));
         } catch (error) {
           alert("not enough liquidity");
         }
@@ -78,7 +108,7 @@ export const Swap: FC<SwapProps> = ({ dexUpdated, setDexUpdated, ...rest }) => {
 
       logic();
     }
-  }, [fromAmt]);
+  }, [liquidity]);
 
   const handlePairChange = () => {
     const from = fromAddress;
@@ -89,44 +119,43 @@ export const Swap: FC<SwapProps> = ({ dexUpdated, setDexUpdated, ...rest }) => {
     setFromAmt("");
   };
 
-  const swap = async () => {
+  const withdraw = async () => {
     try {
-      const _ = ethers.utils.parseEther(fromAmt);
+      const _ = ethers.utils.parseEther(liquidity);
     } catch (error) {
       alert("please input a valid amount");
       return;
     }
 
-    const amt = ethers.utils.parseEther(fromAmt);
+    const amt = ethers.utils.parseEther(liquidity);
 
     if (!!dex) {
-      if (fromAddress === tok.address) {
-        const approveTx = await tok.approve(dex.address, amt);
-        toast({
-          title: "tx sent to Polygon",
-          description: `hash: ${approveTx.hash}. please wait for tx to be mined before swap.`,
-        });
-        setSwapDisabled(true);
-        await approveTx.wait();
-        setSwapDisabled(false);
-      } else {
-        const approveTx = await uni.approve(dex.address, amt);
-        setSwapDisabled(true);
-        toast({
-          title: "tx sent to Polygon",
-          description: `hash: ${approveTx.hash}. please wait for tx to be mined before swap.`,
-        });
-        await approveTx.wait();
-        setSwapDisabled(false);
-      }
+      const approveTx = await tok.approve(dex.address, amt);
+      toast({
+        title: "tx sent to Polygon",
+        description: `hash: ${approveTx.hash}. please wait for tx to be mined before swap.`,
+      });
+      setWithdrawDisabled(true);
+      await approveTx.wait();
+      setWithdrawDisabled(false);
 
-      const tx = await dex.swap(amt, fromAddress, toAddress);
+      const approveTx2 = await uni.approve(dex.address, amt);
+      setWithdrawDisabled(true);
+      toast({
+        title: "tx sent to Polygon",
+        description: `hash: ${approveTx2.hash}. please wait for tx to be mined before swap.`,
+      });
+      await approveTx2.wait();
+      setWithdrawDisabled(false);
+
+      const tx = await dex.withdraw(amt, fromAddress, toAddress);
       toast({
         title: "tx sent to Polygon",
         description: `hash: ${tx.hash}.`,
       });
       await tx.wait();
       updateTokBalance();
+      updateLiquidityAmt();
       updateUniBalance();
       setDexUpdated((prev) => !prev);
     }
@@ -135,6 +164,11 @@ export const Swap: FC<SwapProps> = ({ dexUpdated, setDexUpdated, ...rest }) => {
   return (
     <Box>
       <Wrapper {...wrapperStyles} {...rest}>
+        <Liquidity
+          amount={liquidity}
+          setAmount={setLiquidity}
+          balance={liquidityMinted}
+        />
         <Token
           symbol={fromAddress === tok?.address ? "TOK" : "UNI"}
           from={true}
@@ -152,8 +186,8 @@ export const Swap: FC<SwapProps> = ({ dexUpdated, setDexUpdated, ...rest }) => {
         />
       </Wrapper>
       {!!provider ? (
-        <Button {...buttonStyles} onClick={swap} disabled={swapDisabled}>
-          Swap
+        <Button {...buttonStyles} onClick={withdraw} disabled={swapDisabled}>
+          Withdraw
         </Button>
       ) : (
         <Button {...buttonStyles} onClick={connectWallet}>
@@ -191,4 +225,10 @@ const buttonStyles: ButtonProps = {
   _active: {
     bg: "linear-gradient(92.56deg, #FD7B3B 2.51%, #B93FF0 124.48%)",
   },
+};
+
+const textStyles: TextProps = {
+  fontSize: "16px",
+  lineHeight: "14px",
+  color: "#787878",
 };
